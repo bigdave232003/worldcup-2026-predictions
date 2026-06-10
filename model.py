@@ -35,9 +35,10 @@ FAV_GOAL_COEFF        = 0.70
 DOG_GOAL_COEFF        = 0.40
 NEUTRAL_VENUE_ELO     = 0.0     # everyone else plays on neutral ground
 
-# Blend base Elo with bookmaker-implied strength (0 = ignore odds, 1 = only odds).
-# The market is better-calibrated than pure Elo, so leaning on it pulls the model
-# off its favourite-heavy bias toward realistic prices.
+# Blend base Elo with FIFA-rank-implied strength (0 = ignore rank, 1 = only rank).
+# A second, independent strength signal smooths Elo's noise. (Was title-odds, but
+# those conflate single-match strength with title-winning odds and distort weak
+# hosts/longshots, so FIFA rank — a true per-match measure — is used instead.)
 ODDS_BLEND            = 0.40
 
 # Form & injuries are already in Elo-equivalent points in data.py; scale here.
@@ -53,31 +54,37 @@ DRAW_INFLATION        = 1.08    # >1 nudges probability mass onto the diagonal
 # ---------------------------------------------------------------------------
 # STRENGTH
 # ---------------------------------------------------------------------------
-def _odds_implied_elo(odds, mean_elo):
-    """Turn tournament title odds into a rough strength signal on the Elo scale.
+def _rank_implied_elo(fifa_rank):
+    """Map a FIFA world-ranking position to an Elo-scale strength signal.
 
-    Shorter odds -> stronger team. We map the field's title probabilities onto
-    the field's Elo spread so the blend stays on the same scale.
+    Unlike tournament *title* odds (which conflate single-match strength with
+    the chance of winning 7 knockout games, and so unfairly punish weak hosts
+    and longshots), FIFA rank is a per-team match-strength measure available for
+    every side. Linear in rank, anchored to the field's Elo spread: rank 1 maps
+    near the top, rank ~85 near the bottom.
     """
-    if not odds:
+    if not fifa_rank:
         return None
-    implied = 1.0 / odds                       # crude (un-normalised) win prob
-    # log-odds spreads contenders out sensibly; centre on the field mean.
-    return mean_elo + 220.0 * math.log(implied * 20.0 + 1e-9)
+    return RANK1_ELO - (fifa_rank - 1) * RANK_ELO_SLOPE
 
 
-_priced = [t["odds"] for t in TEAMS.values() if t["odds"]]
+# Anchors for the rank->Elo map (calibrated to this field's Elo range).
+RANK1_ELO       = 2150.0
+RANK_ELO_SLOPE  = 8.3      # Elo points lost per ranking place
+
 _MEAN_ELO = sum(t["elo"] for t in TEAMS.values()) / len(TEAMS)
 
 
 def effective_elo(team):
-    """Base Elo adjusted for odds blend, form and injuries (not venue)."""
+    """Base Elo blended with FIFA-rank strength, plus form and injuries
+    (venue handled separately). The blend is symmetric across all teams, so it
+    smooths rather than distorts."""
     t = TEAMS[team]
     elo = float(t["elo"])
 
-    odds_elo = _odds_implied_elo(t["odds"], _MEAN_ELO)
-    if odds_elo is not None:
-        elo = (1 - ODDS_BLEND) * elo + ODDS_BLEND * odds_elo
+    rank_elo = _rank_implied_elo(t.get("fifa"))
+    if rank_elo is not None:
+        elo = (1 - ODDS_BLEND) * elo + ODDS_BLEND * rank_elo
 
     elo += FORM_WEIGHT * t["form"]
     elo -= INJURY_WEIGHT * t["inj"]
