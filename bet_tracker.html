@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My World Cup 2026 Bets</title>
+<style>
+  :root { --ink:#1d3557; --line:#e3e8ef; --won:#2a9d8f; --lost:#e76f51; --live:#e9a33a; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         margin:0; background:#f6f8fb; color:#22303f; }
+  header { background:linear-gradient(135deg,#1d3557,#2a9d8f); color:#fff; padding:30px 24px; }
+  header h1 { margin:0 0 6px; font-size:24px; }
+  header p { margin:0; opacity:.92; font-size:14px; }
+  .wrap { max-width:920px; margin:0 auto; padding:24px; }
+  .acca-note { font-size:13px; color:#6b7a8d; background:#fff6e6; border:1px solid #f0e0bb;
+               border-radius:8px; padding:10px 12px; margin:0 0 18px; }
+  code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .acca { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(20,40,70,.10);
+          margin-bottom:18px; overflow:hidden; border-left:5px solid var(--line); }
+  .badge-won-card { border-left-color:var(--won); }
+  .badge-lost-card { border-left-color:var(--lost); opacity:.85; }
+  .badge-live-card { border-left-color:var(--live); }
+  .acca-head { padding:14px 18px 8px; }
+  .acca-head h3 { margin:0; font-size:18px; color:var(--ink); }
+  .badge { font-size:11px; font-weight:700; color:#fff; border-radius:20px;
+           padding:2px 10px; margin-left:8px; vertical-align:2px; letter-spacing:.03em; }
+  .badge-won { background:var(--won); } .badge-lost { background:var(--lost); }
+  .badge-live { background:var(--live); }
+  .meta { margin:7px 0 0; font-size:13px; color:#6b7a8d; }
+  .profit-win { color:var(--won); font-weight:700; }
+  .profit-loss { color:var(--lost); font-weight:700; }
+  .profit-live { color:#46566a; font-weight:600; }
+  table.legs { width:100%; border-collapse:collapse; margin-top:6px; table-layout:fixed; }
+  table.legs th, table.legs td { padding:8px 18px; font-size:13px; text-align:left;
+        border-top:1px solid var(--line); white-space:normal; overflow-wrap:anywhere;
+        vertical-align:top; }
+  table.legs th { background:#f0f4f9; color:#46566a; font-size:11px;
+        text-transform:uppercase; letter-spacing:.03em; border-top:none; }
+  .legs .st { width:34px; text-align:center; }
+  .legs .score { width:54px; text-align:center; white-space:nowrap; font-weight:600; }
+  .legs .team { font-weight:600; }
+  .legs .venue { color:#6b7a8d; font-size:12px; }
+  .legs .res { color:var(--ink); font-size:12px; }
+  tr.leg-won .team { color:var(--won); }
+  tr.leg-lost { background:#fdf0ec; }
+  tr.leg-lost .team { color:var(--lost); text-decoration:line-through; }
+  tr.leg-pending .res { color:#9aa7b6; }
+  footer { max-width:920px; margin:0 auto; padding:6px 24px 50px; font-size:12px; color:#8595a6; }
+</style></head>
+<body>
+<nav class="sitenav">
+  <span class="brand">⚽ WC 2026</span>
+  <div class="links"><a href="index.html" class="">Home</a><a href="worldcup_predictions.html" class="">Predictions</a><a href="bet_tracker.html" class="is-active">My Bets</a></div>
+</nav>
+<style>
+  .sitenav { position:sticky; top:0; z-index:50; display:flex; align-items:center;
+    gap:18px; background:#142a47; color:#fff; padding:10px 20px;
+    box-shadow:0 2px 8px rgba(10,25,50,.25); }
+  .sitenav .brand { font-weight:700; font-size:15px; letter-spacing:.02em; }
+  .sitenav .links { display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }
+  .sitenav a { color:#cdd9e8; text-decoration:none; font-size:13.5px; font-weight:600;
+    padding:6px 12px; border-radius:7px; transition:background .15s,color .15s; }
+  .sitenav a:hover { background:rgba(255,255,255,.10); color:#fff; }
+  .sitenav a.is-active { background:#2a9d8f; color:#fff; }
+</style>
+<header>
+  <h1>🎟️ My World Cup 2026 Accumulators</h1>
+  <p>Staked £30 across 3 accas &middot; returned £0.00 so far &middot; £1,364.23 still live</p>
+</header>
+<div class="wrap">
+  <p class="acca-note">No matches have finished yet — kicks off 11 June. Re-run <code>python track_bets.py</code> to refresh results.</p>
+  
+      <div class="acca badge-live-card">
+        <div class="acca-head">
+          <h3>✨ Tenfold
+            <span class="badge badge-live">STILL LIVE</span></h3>
+          <p class="meta">£10 @ 9.95 &rarr;
+            returns £99.52 &nbsp;|&nbsp; <span class="profit-live">0/5 legs in &middot; £99.52 still to play for</span></p>
+        </div>
+        <table class="legs">
+          <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
+              <th>Result</th></tr>
+          <tr class="leg-pending"><td class="st">⏳</td><td class="team">Scotland win</td><td class="venue">Haiti v Scotland</td><td class="score">1.53</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Germany win</td><td class="venue">Germany v Ivory Coast</td><td class="score">1.53</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Brazil win</td><td class="venue">Brazil v Morocco</td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Sweden</td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Argentina win</td><td class="venue">Argentina v Austria</td><td class="score">1.62</td><td class="res">—</td></tr>
+        </table>
+      </div>
+
+      <div class="acca badge-live-card">
+        <div class="acca-head">
+          <h3>💎 Twenty-Up
+            <span class="badge badge-live">STILL LIVE</span></h3>
+          <p class="meta">£10 @ 19.55 &rarr;
+            returns £195.54 &nbsp;|&nbsp; <span class="profit-live">0/6 legs in &middot; £195.54 still to play for</span></p>
+        </div>
+        <table class="legs">
+          <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
+              <th>Result</th></tr>
+          <tr class="leg-pending"><td class="st">⏳</td><td class="team">Brazil win</td><td class="venue">Brazil v Morocco</td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Sweden</td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Argentina win</td><td class="venue">Argentina v Austria</td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Spain win</td><td class="venue">Spain v Uruguay</td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Germany win</td><td class="venue">Germany v Ecuador</td><td class="score">1.67</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">England win</td><td class="venue">England v Croatia</td><td class="score">1.70</td><td class="res">—</td></tr>
+        </table>
+      </div>
+
+      <div class="acca badge-live-card">
+        <div class="acca-head">
+          <h3>🌠 The Ton
+            <span class="badge badge-live">STILL LIVE</span></h3>
+          <p class="meta">£10 @ 106.92 &rarr;
+            returns £1,069 &nbsp;|&nbsp; <span class="profit-live">0/7 legs in &middot; £1,069 still to play for</span></p>
+        </div>
+        <table class="legs">
+          <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
+              <th>Result</th></tr>
+          <tr class="leg-pending"><td class="st">⏳</td><td class="team">France win</td><td class="venue">France v Norway</td><td class="score">1.80</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Iran win</td><td class="venue">Iran v New Zealand</td><td class="score">1.85</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Czech Republic win</td><td class="venue">Czech Republic v South Africa</td><td class="score">1.91</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Japan</td><td class="score">2.00</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">South Korea win</td><td class="venue">South Africa v South Korea</td><td class="score">2.00</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Switzerland win</td><td class="venue">Canada v Switzerland</td><td class="score">2.05</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Japan win</td><td class="venue">Japan v Sweden</td><td class="score">2.05</td><td class="res">—</td></tr>
+        </table>
+      </div>
+</div>
+<footer>
+  Results via The Odds API. Updated: pre-tournament (no results yet). Re-run <code>python track_bets.py</code> to refresh.
+  For entertainment only.
+</footer>
+</body></html>

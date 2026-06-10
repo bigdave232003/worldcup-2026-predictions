@@ -1,0 +1,110 @@
+"""
+Shared site chrome: a navigation bar injected into every page, and the static
+landing page (index.html).
+
+Keeping this in one module means the nav markup + styling live in a single place
+and every generated page stays self-contained (CSS is inline, no shared asset
+files to deploy on GitHub Pages).
+"""
+
+# Pages in the site. (filename, label, active-key)
+PAGES = [
+    ("index.html", "Home", "home"),
+    ("worldcup_predictions.html", "Predictions", "predictions"),
+    ("bet_tracker.html", "My Bets", "bets"),
+]
+
+
+def nav(active):
+    """Return the nav bar HTML with `active` link highlighted.
+
+    `active` is one of the keys in PAGES ("home"/"predictions"/"bets").
+    """
+    links = "".join(
+        f'<a href="{href}" class="{"is-active" if key == active else ""}">{label}</a>'
+        for href, label, key in PAGES
+    )
+    return f"""<nav class="sitenav">
+  <span class="brand">⚽ WC 2026</span>
+  <div class="links">{links}</div>
+</nav>
+<style>
+  .sitenav {{ position:sticky; top:0; z-index:50; display:flex; align-items:center;
+    gap:18px; background:#142a47; color:#fff; padding:10px 20px;
+    box-shadow:0 2px 8px rgba(10,25,50,.25); }}
+  .sitenav .brand {{ font-weight:700; font-size:15px; letter-spacing:.02em; }}
+  .sitenav .links {{ display:flex; gap:6px; margin-left:auto; flex-wrap:wrap; }}
+  .sitenav a {{ color:#cdd9e8; text-decoration:none; font-size:13.5px; font-weight:600;
+    padding:6px 12px; border-radius:7px; transition:background .15s,color .15s; }}
+  .sitenav a:hover {{ background:rgba(255,255,255,.10); color:#fff; }}
+  .sitenav a.is-active {{ background:#2a9d8f; color:#fff; }}
+</style>"""
+
+
+def render_index():
+    """Full static landing page linking to the other pages."""
+    cards = """
+      <a class="card" href="worldcup_predictions.html">
+        <h3>📊 Match Predictions</h3>
+        <p>Score, win/draw/loss probability and a most-likely result for all 72
+           group-stage matches — plus a 20,000-run Monte&nbsp;Carlo tournament
+           simulation and live-odds accumulator ideas.</p>
+        <span class="go">View predictions &rarr;</span>
+      </a>
+      <a class="card" href="bet_tracker.html">
+        <h3>🎟️ My Bets</h3>
+        <p>Live tracker for my three placed accumulators (Tenfold, Twenty-Up,
+           The&nbsp;Ton). Auto-updates with real match results — won, lost or
+           still live, leg by leg.</p>
+        <span class="go">Track the bets &rarr;</span>
+      </a>"""
+
+    return _INDEX_TEMPLATE.replace("{{NAV}}", nav("home")).replace("{{CARDS}}", cards)
+
+
+_INDEX_TEMPLATE = """<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>World Cup 2026 — Predictions & Bets</title>
+<style>
+  * {{ box-sizing:border-box; }}
+  body {{ font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    margin:0; background:#f6f8fb; color:#22303f; line-height:1.5; }}
+  header {{ background:linear-gradient(135deg,#1d3557,#2a9d8f); color:#fff; padding:46px 24px; }}
+  header h1 {{ margin:0 0 8px; font-size:30px; }}
+  header p {{ margin:0; opacity:.92; font-size:15px; max-width:640px; }}
+  .wrap {{ max-width:860px; margin:0 auto; padding:28px 24px 60px; }}
+  .cards {{ display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:18px; }}
+  .card {{ display:block; background:#fff; border-radius:14px; padding:22px;
+    box-shadow:0 1px 4px rgba(20,40,70,.10); text-decoration:none; color:inherit;
+    border:1px solid #eef2f7; transition:transform .15s, box-shadow .15s; }}
+  .card:hover {{ transform:translateY(-3px); box-shadow:0 6px 18px rgba(20,40,70,.14); }}
+  .card h3 {{ margin:0 0 8px; font-size:19px; color:#1d3557; }}
+  .card p {{ margin:0 0 14px; font-size:13.5px; color:#56657a; }}
+  .card .go {{ font-size:13px; font-weight:700; color:#2a9d8f; }}
+  .blurb {{ font-size:13px; color:#6b7a8d; background:#fff6e6; border:1px solid #f0e0bb;
+    border-radius:10px; padding:14px 16px; margin:24px 0 0; }}
+  .blurb b {{ color:#46566a; }}
+  footer {{ max-width:860px; margin:0 auto; padding:0 24px 50px; font-size:12px; color:#8595a6; }}
+</style></head>
+<body>
+{{NAV}}
+<header>
+  <h1>⚽ World Cup 2026 — Predictions &amp; Bets</h1>
+  <p>A Poisson–Elo model for the USA · Mexico · Canada tournament: every group-stage
+     match predicted, the whole bracket simulated, and my own accumulators tracked live.</p>
+</header>
+<div class="wrap">
+  <div class="cards">{{CARDS}}</div>
+  <div class="blurb">
+    <b>How it works:</b> team strength comes from world-football Elo blended with bookmaker
+    odds, adjusted for recent form, injuries and host-nation advantage. Goals are modelled
+    with a Poisson process; the tournament is run 20,000 times by Monte&nbsp;Carlo. Accumulator
+    odds are live from Sky&nbsp;Bet via The&nbsp;Odds&nbsp;API.
+    <br><br>
+    <b>For entertainment only</b> — these are model estimates, not betting advice. Every
+    accumulator is &minus;EV once the bookmaker margin compounds.
+  </div>
+</div>
+<footer>Built with a home-grown Python model · updated through the tournament.</footer>
+</body></html>"""

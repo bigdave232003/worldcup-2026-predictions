@@ -1,0 +1,44 @@
+name: Update bet tracker
+
+# Refreshes bet_tracker.html with live match results and commits any change.
+on:
+  schedule:
+    # Daily at 07:17 UTC (off the :00 mark to avoid the cron rush).
+    - cron: "17 7 * * *"
+  workflow_dispatch: {}   # allow manual "Run workflow" from the Actions tab
+
+permissions:
+  contents: write          # needed to push the updated HTML back
+
+concurrency:
+  group: update-tracker
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Refresh bet tracker
+        env:
+          ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
+        run: python track_bets.py
+
+      - name: Commit & push if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git diff --quiet -- bet_tracker.html; then
+            echo "No change in bet_tracker.html — nothing to commit."
+          else
+            git add bet_tracker.html
+            git commit -m "Auto-update bet tracker results"
+            git push
+          fi

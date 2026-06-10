@@ -1,0 +1,289 @@
+"""
+Bet tracker for the placed accumulators.
+
+Reads the frozen bets from bets.json, fetches live match results from The Odds
+API /scores endpoint, evaluates each leg and each acca, and writes a
+self-contained tracker page: bet_tracker.html.
+
+Leg status:  won | lost | pending   (a leg "wins" if the picked team won)
+Acca status: WON      — every leg won
+             LOST     — any leg lost
+             LIVE     — no leg lost yet, some still pending
+
+Usage:  python track_bets.py        (re-run any time to refresh results)
+"""
+
+import json
+import os
+import sys
+import urllib.parse
+import urllib.request
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8")
+except (AttributeError, ValueError):
+    pass
+
+from value_finder import load_api_key
+import site_chrome
+
+API_HOST = "https://api.the-odds-api.com"
+SPORT_KEY = "soccer_fifa_world_cup"
+HERE = os.path.dirname(__file__)
+
+
+def _norm(name):
+    return name.lower().replace("&", "and").strip()
+
+
+# ---------------------------------------------------------------------------
+# Fetch results
+# ---------------------------------------------------------------------------
+def fetch_results(api_key):
+    """Return {frozenset(team_a,team_b): result_dict} for completed matches.
+
+    result_dict = {home, away, home_goals, away_goals, completed, commence}.
+    /scores does not count against the odds quota the same way; daysFrom=3
+    keeps recently-finished games in view."""
+    params = urllib.parse.urlencode({"apiKey": api_key, "daysFrom": 3})
+    url = f"{API_HOST}/v4/sports/{SPORT_KEY}/scores/?{params}"
+    req = urllib.request.Request(url, headers={"User-Agent": "wc2026/1.0"})
+    with urllib.request.urlopen(req, timeout=30) as r:
+        events = json.load(r)
+
+    results = {}
+    for ev in events:
+        home, away = ev.get("home_team"), ev.get("away_team")
+        if not home or not away:
+            continue
+        hg = ag = None
+        if ev.get("scores"):
+            for s in ev["scores"]:
+                try:
+                    val = int(s["score"])
+                except (ValueError, TypeError, KeyError):
+                    continue
+                if _norm(s["name"]) == _norm(home):
+                    hg = val
+                elif _norm(s["name"]) == _norm(away):
+                    ag = val
+        results[frozenset([_norm(home), _norm(away)])] = {
+            "home": home, "away": away, "home_goals": hg, "away_goals": ag,
+            "completed": bool(ev.get("completed")),
+            "commence": ev.get("commence_time", ""),
+        }
+    return results
+
+
+# ---------------------------------------------------------------------------
+# Evaluate
+# ---------------------------------------------------------------------------
+def eval_leg(leg, results):
+    """Return (status, score_str) for one leg."""
+    teams = [t.strip() for t in leg["match"].split(" v ")]
+    key = frozenset(_norm(t) for t in teams)
+    res = results.get(key)
+    if not res or not res["completed"] or res["home_goals"] is None:
+        return "pending", "—"
+
+    hg, ag = res["home_goals"], res["away_goals"]
+    score = f"{res['home']} {hg}–{ag} {res['away']}"
+    # did the picked team win?
+    if hg == ag:
+        winner = None
+    elif hg > ag:
+        winner = _norm(res["home"])
+    else:
+        winner = _norm(res["away"])
+    status = "won" if winner == _norm(leg["team"]) else "lost"
+    return status, score
+
+
+def eval_acca(acca, results):
+    legs = []
+    for leg in acca["legs"]:
+        status, score = eval_leg(leg, results)
+        legs.append({**leg, "status": status, "score": score})
+    statuses = [l["status"] for l in legs]
+    if "lost" in statuses:
+        overall = "LOST"
+    elif all(s == "won" for s in statuses):
+        overall = "WON"
+    else:
+        overall = "LIVE"
+    won_n = statuses.count("won")
+    return {**acca, "legs": legs, "overall": overall,
+            "won_legs": won_n, "total_legs": len(legs)}
+
+
+# ---------------------------------------------------------------------------
+# HTML
+# ---------------------------------------------------------------------------
+import html as _html
+
+
+def _leg_row(l):
+    icon = {"won": "✅", "lost": "❌", "pending": "⏳"}[l["status"]]
+    return (f'<tr class="leg-{l["status"]}">'
+            f'<td class="st">{icon}</td>'
+            f'<td class="team">{_html.escape(l["pick"])}</td>'
+            f'<td class="venue">{_html.escape(l["match"])}</td>'
+            f'<td class="score">{l["odds"]:.2f}</td>'
+            f'<td class="res">{_html.escape(l["score"])}</td></tr>')
+
+
+def _acca_card(a):
+    badge = {"WON": ("badge-won", "WON 🎉"),
+             "LOST": ("badge-lost", "LOST"),
+             "LIVE": ("badge-live", "STILL LIVE")}[a["overall"]]
+    legrows = "\n".join(_leg_row(l) for l in a["legs"])
+    ret = a["returns"]
+    ret_str = f"£{ret:,.0f}" if ret >= 1000 else f"£{ret:,.2f}"
+    profit = ret - a["stake"]
+    if a["overall"] == "WON":
+        outcome = f'<span class="profit-win">+£{profit:,.2f} profit</span>'
+    elif a["overall"] == "LOST":
+        outcome = f'<span class="profit-loss">−£{a["stake"]:.2f} (busted)</span>'
+    else:
+        outcome = (f'<span class="profit-live">{a["won_legs"]}/{a["total_legs"]} '
+                   f'legs in &middot; {ret_str} still to play for</span>')
+    return f"""
+      <div class="acca {badge[0]}-card">
+        <div class="acca-head">
+          <h3>{a['emoji']} {_html.escape(a['name'])}
+            <span class="badge {badge[0]}">{badge[1]}</span></h3>
+          <p class="meta">£{a['stake']:.0f} @ {a['combined_odds']:,.2f} &rarr;
+            returns {ret_str} &nbsp;|&nbsp; {outcome}</p>
+        </div>
+        <table class="legs">
+          <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
+              <th>Result</th></tr>
+          {legrows}
+        </table>
+      </div>"""
+
+
+def write_tracker(accas, generated, any_results):
+    cards = "\n".join(_acca_card(a) for a in accas)
+    total_stake = sum(a["stake"] for a in accas)
+    won = [a for a in accas if a["overall"] == "WON"]
+    total_return = sum(a["returns"] for a in won)
+    live = [a for a in accas if a["overall"] == "LIVE"]
+    potential = sum(a["returns"] for a in live)
+
+    status_line = (
+        f"Staked £{total_stake:.0f} across {len(accas)} accas &middot; "
+        f"returned £{total_return:,.2f} so far &middot; "
+        f"£{potential:,.2f} still live"
+    )
+    note = ("" if any_results else
+            '<p class="acca-note">No matches have finished yet — kicks off '
+            '11 June. Re-run <code>python track_bets.py</code> to refresh results.</p>')
+
+    doc = _TEMPLATE.replace("{{CARDS}}", cards) \
+                   .replace("{{STATUS}}", status_line) \
+                   .replace("{{GENERATED}}", _html.escape(generated)) \
+                   .replace("{{NOTE}}", note) \
+                   .replace("{{NAV}}", site_chrome.nav("bets"))
+    out = os.path.join(HERE, "bet_tracker.html")
+    with open(out, "w", encoding="utf-8") as f:
+        f.write(doc)
+    return out
+
+
+_TEMPLATE = """<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My World Cup 2026 Bets</title>
+<style>
+  :root { --ink:#1d3557; --line:#e3e8ef; --won:#2a9d8f; --lost:#e76f51; --live:#e9a33a; }
+  * { box-sizing:border-box; }
+  body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+         margin:0; background:#f6f8fb; color:#22303f; }
+  header { background:linear-gradient(135deg,#1d3557,#2a9d8f); color:#fff; padding:30px 24px; }
+  header h1 { margin:0 0 6px; font-size:24px; }
+  header p { margin:0; opacity:.92; font-size:14px; }
+  .wrap { max-width:920px; margin:0 auto; padding:24px; }
+  .acca-note { font-size:13px; color:#6b7a8d; background:#fff6e6; border:1px solid #f0e0bb;
+               border-radius:8px; padding:10px 12px; margin:0 0 18px; }
+  code { background:#eef2f7; padding:1px 5px; border-radius:4px; font-size:12px; }
+  .acca { background:#fff; border-radius:12px; box-shadow:0 1px 4px rgba(20,40,70,.10);
+          margin-bottom:18px; overflow:hidden; border-left:5px solid var(--line); }
+  .badge-won-card { border-left-color:var(--won); }
+  .badge-lost-card { border-left-color:var(--lost); opacity:.85; }
+  .badge-live-card { border-left-color:var(--live); }
+  .acca-head { padding:14px 18px 8px; }
+  .acca-head h3 { margin:0; font-size:18px; color:var(--ink); }
+  .badge { font-size:11px; font-weight:700; color:#fff; border-radius:20px;
+           padding:2px 10px; margin-left:8px; vertical-align:2px; letter-spacing:.03em; }
+  .badge-won { background:var(--won); } .badge-lost { background:var(--lost); }
+  .badge-live { background:var(--live); }
+  .meta { margin:7px 0 0; font-size:13px; color:#6b7a8d; }
+  .profit-win { color:var(--won); font-weight:700; }
+  .profit-loss { color:var(--lost); font-weight:700; }
+  .profit-live { color:#46566a; font-weight:600; }
+  table.legs { width:100%; border-collapse:collapse; margin-top:6px; table-layout:fixed; }
+  table.legs th, table.legs td { padding:8px 18px; font-size:13px; text-align:left;
+        border-top:1px solid var(--line); white-space:normal; overflow-wrap:anywhere;
+        vertical-align:top; }
+  table.legs th { background:#f0f4f9; color:#46566a; font-size:11px;
+        text-transform:uppercase; letter-spacing:.03em; border-top:none; }
+  .legs .st { width:34px; text-align:center; }
+  .legs .score { width:54px; text-align:center; white-space:nowrap; font-weight:600; }
+  .legs .team { font-weight:600; }
+  .legs .venue { color:#6b7a8d; font-size:12px; }
+  .legs .res { color:var(--ink); font-size:12px; }
+  tr.leg-won .team { color:var(--won); }
+  tr.leg-lost { background:#fdf0ec; }
+  tr.leg-lost .team { color:var(--lost); text-decoration:line-through; }
+  tr.leg-pending .res { color:#9aa7b6; }
+  footer { max-width:920px; margin:0 auto; padding:6px 24px 50px; font-size:12px; color:#8595a6; }
+</style></head>
+<body>
+{{NAV}}
+<header>
+  <h1>🎟️ My World Cup 2026 Accumulators</h1>
+  <p>{{STATUS}}</p>
+</header>
+<div class="wrap">
+  {{NOTE}}
+  {{CARDS}}
+</div>
+<footer>
+  Results via The Odds API. Updated: {{GENERATED}}. Re-run <code>python track_bets.py</code> to refresh.
+  For entertainment only.
+</footer>
+</body></html>"""
+
+
+def main():
+    bets = json.load(open(os.path.join(HERE, "bets.json"), encoding="utf-8"))
+    api_key = load_api_key()
+    results = {}
+    if api_key:
+        try:
+            results = fetch_results(api_key)
+        except Exception as e:
+            print(f"(Could not fetch results: {e})")
+    else:
+        print("No API key — showing bets as pending. Set ODDS_API_KEY to fetch results.")
+
+    evaluated = [eval_acca(a, results) for a in bets["accas"]]
+    any_results = any(l["status"] != "pending" for a in evaluated for l in a["legs"])
+
+    # console summary
+    for a in evaluated:
+        print(f"{a['emoji']} {a['name']}: {a['overall']} "
+              f"({a['won_legs']}/{a['total_legs']} legs won)")
+        for l in a["legs"]:
+            mark = {"won": "✅", "lost": "❌", "pending": "⏳"}[l["status"]]
+            print(f"   {mark} {l['pick']:<22} {l['score']}")
+
+    # generated timestamp: use the API's freshest last_update if available, else a label
+    generated = "pre-tournament (no results yet)" if not any_results else "live"
+    out = write_tracker(evaluated, generated, any_results)
+    print(f"\nWrote {out}")
+
+
+if __name__ == "__main__":
+    main()

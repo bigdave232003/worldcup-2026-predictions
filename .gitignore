@@ -1,0 +1,12 @@
+# Secrets — the Odds API key must NEVER be committed.
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Local tooling / editor
+.claude/
+.vscode/
+.idea/

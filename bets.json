@@ -1,0 +1,141 @@
+{
+  "stake_each": 10.0,
+  "placed": "2026-06-10",
+  "accas": [
+    {
+      "name": "Tenfold",
+      "emoji": "✨",
+      "combined_odds": 9.95,
+      "stake": 10.0,
+      "returns": 99.52,
+      "legs": [
+        {
+          "match": "Haiti v Scotland",
+          "pick": "Scotland win",
+          "team": "Scotland",
+          "odds": 1.53
+        },
+        {
+          "match": "Germany v Ivory Coast",
+          "pick": "Germany win",
+          "team": "Germany",
+          "odds": 1.53
+        },
+        {
+          "match": "Brazil v Morocco",
+          "pick": "Brazil win",
+          "team": "Brazil",
+          "odds": 1.62
+        },
+        {
+          "match": "Netherlands v Sweden",
+          "pick": "Netherlands win",
+          "team": "Netherlands",
+          "odds": 1.62
+        },
+        {
+          "match": "Argentina v Austria",
+          "pick": "Argentina win",
+          "team": "Argentina",
+          "odds": 1.62
+        }
+      ]
+    },
+    {
+      "name": "Twenty-Up",
+      "emoji": "💎",
+      "combined_odds": 19.55,
+      "stake": 10.0,
+      "returns": 195.54,
+      "legs": [
+        {
+          "match": "Brazil v Morocco",
+          "pick": "Brazil win",
+          "team": "Brazil",
+          "odds": 1.62
+        },
+        {
+          "match": "Netherlands v Sweden",
+          "pick": "Netherlands win",
+          "team": "Netherlands",
+          "odds": 1.62
+        },
+        {
+          "match": "Argentina v Austria",
+          "pick": "Argentina win",
+          "team": "Argentina",
+          "odds": 1.62
+        },
+        {
+          "match": "Spain v Uruguay",
+          "pick": "Spain win",
+          "team": "Spain",
+          "odds": 1.62
+        },
+        {
+          "match": "Germany v Ecuador",
+          "pick": "Germany win",
+          "team": "Germany",
+          "odds": 1.67
+        },
+        {
+          "match": "England v Croatia",
+          "pick": "England win",
+          "team": "England",
+          "odds": 1.7
+        }
+      ]
+    },
+    {
+      "name": "The Ton",
+      "emoji": "🌠",
+      "combined_odds": 106.92,
+      "stake": 10.0,
+      "returns": 1069.17,
+      "legs": [
+        {
+          "match": "France v Norway",
+          "pick": "France win",
+          "team": "France",
+          "odds": 1.8
+        },
+        {
+          "match": "Iran v New Zealand",
+          "pick": "Iran win",
+          "team": "Iran",
+          "odds": 1.85
+        },
+        {
+          "match": "Czech Republic v South Africa",
+          "pick": "Czech Republic win",
+          "team": "Czech Republic",
+          "odds": 1.91
+        },
+        {
+          "match": "Netherlands v Japan",
+          "pick": "Netherlands win",
+          "team": "Netherlands",
+          "odds": 2.0
+        },
+        {
+          "match": "South Africa v South Korea",
+          "pick": "South Korea win",
+          "team": "South Korea",
+          "odds": 2.0
+        },
+        {
+          "match": "Canada v Switzerland",
+          "pick": "Switzerland win",
+          "team": "Switzerland",
+          "odds": 2.05
+        },
+        {
+          "match": "Japan v Sweden",
+          "pick": "Japan win",
+          "team": "Japan",
+          "odds": 2.05
+        }
+      ]
+    }
+  ]
+}
