@@ -13,6 +13,7 @@ TV listings, June 2026) are filled in; anything not yet confirmed returns
 
 import json
 import os
+import unicodedata
 import urllib.request
 from datetime import datetime, timedelta
 
@@ -24,14 +25,21 @@ BST_OFFSET = timedelta(hours=1)   # June/July 2026 = British Summer Time (UTC+1)
 
 
 def _norm(name):
-    return (name.lower().replace("&", "and").replace("ü", "u")
-            .replace("türkiye", "turkey").replace("türkiye", "turkey")
-            .replace("united states", "usa").strip())
+    # Strip accents (Curaçao -> curacao, Türkiye -> turkiye) so API spellings and
+    # our keys always match, then normalise a couple of known name variants.
+    n = "".join(c for c in unicodedata.normalize("NFKD", name)
+                if not unicodedata.combining(c))
+    n = n.lower().replace("&", "and").strip()
+    n = n.replace("turkiye", "turkey").replace("united states", "usa")
+    return n
 
 
 # Confirmed UK broadcaster by match, keyed by frozenset of normalised team names.
-# Source: ITV/BBC World Cup 2026 split + UK TV listings (June 2026).
+# Source: UK TV listings (live-footballontv.com, Sports Mole, Goal, 101GreatGoals),
+# cross-checked June 2026. All 24 Matchday-1 games confirmed (BBC One / ITV1 — the
+# BBC Two / ITV4 overflow channels only start from Matchday 2). Later rounds TBC.
 _CHANNELS = {
+    # --- Matchday 1 (all confirmed) ---
     frozenset(["mexico", "south africa"]):              "ITV1",
     frozenset(["south korea", "czech republic"]):       "ITV1",
     frozenset(["canada", "bosnia and herzegovina"]):    "BBC One",
@@ -40,11 +48,25 @@ _CHANNELS = {
     frozenset(["brazil", "morocco"]):                   "BBC One",
     frozenset(["haiti", "scotland"]):                   "BBC One",
     frozenset(["australia", "turkey"]):                 "ITV1",
-    # England group games
+    frozenset(["germany", "curacao"]):                 "ITV1",
+    frozenset(["netherlands", "japan"]):               "ITV1",
+    frozenset(["ivory coast", "ecuador"]):             "BBC One",
+    frozenset(["sweden", "tunisia"]):                  "ITV1",
+    frozenset(["spain", "cape verde"]):                "ITV1",
+    frozenset(["belgium", "egypt"]):                   "BBC One",
+    frozenset(["saudi arabia", "uruguay"]):            "ITV1",
+    frozenset(["iran", "new zealand"]):                "BBC One",
+    frozenset(["france", "senegal"]):                  "BBC One",
+    frozenset(["iraq", "norway"]):                     "BBC One",
+    frozenset(["argentina", "algeria"]):               "ITV1",
+    frozenset(["austria", "jordan"]):                  "BBC One",
+    frozenset(["portugal", "dr congo"]):               "BBC One",
     frozenset(["england", "croatia"]):                 "ITV1",
+    frozenset(["ghana", "panama"]):                    "ITV1",
+    frozenset(["uzbekistan", "colombia"]):             "BBC One",
+    # --- Later rounds: confirmed where known ---
     frozenset(["england", "ghana"]):                   "BBC One",
     frozenset(["panama", "england"]):                  "ITV1",
-    # Scotland group games
     frozenset(["scotland", "morocco"]):                "ITV1 / STV",
     frozenset(["brazil", "scotland"]):                 "BBC One",
 }
