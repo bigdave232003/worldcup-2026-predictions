@@ -16,8 +16,7 @@ Usage:  python track_bets.py        (re-run any time to refresh results)
 import json
 import os
 import sys
-import urllib.parse
-import urllib.request
+from datetime import datetime, timezone, timedelta
 
 try:
     sys.stdout.reconfigure(encoding="utf-8")
@@ -26,10 +25,9 @@ except (AttributeError, ValueError):
 
 from value_finder import load_api_key
 import site_chrome
-from fixtures import fetch_fixtures, fmt_bst, channel_for
+from fixtures import (fetch_score_events, fixtures_from_events,
+                      fmt_bst, channel_for)
 
-API_HOST = "https://api.the-odds-api.com"
-SPORT_KEY = "soccer_fifa_world_cup"
 HERE = os.path.dirname(__file__)
 
 
@@ -40,18 +38,10 @@ def _norm(name):
 # ---------------------------------------------------------------------------
 # Fetch results
 # ---------------------------------------------------------------------------
-def fetch_results(api_key):
-    """Return {frozenset(team_a,team_b): result_dict} for completed matches.
-
-    result_dict = {home, away, home_goals, away_goals, completed, commence}.
-    /scores does not count against the odds quota the same way; daysFrom=3
-    keeps recently-finished games in view."""
-    params = urllib.parse.urlencode({"apiKey": api_key, "daysFrom": 3})
-    url = f"{API_HOST}/v4/sports/{SPORT_KEY}/scores/?{params}"
-    req = urllib.request.Request(url, headers={"User-Agent": "wc2026/1.0"})
-    with urllib.request.urlopen(req, timeout=30) as r:
-        events = json.load(r)
-
+def results_from_events(events):
+    """Return {frozenset(team_a,team_b): result_dict} for completed matches,
+    parsed from raw /scores events (see fixtures.fetch_score_events). Parsing is
+    split from fetching so results + fixtures share ONE API call per refresh."""
     results = {}
     for ev in events:
         home, away = ev.get("home_team"), ev.get("away_team")
@@ -157,11 +147,27 @@ def _leg_row(l, next_key=None):
             f'<td class="res">{_html.escape(l["score"])}</td></tr>')
 
 
+def _acca_next_key(a):
+    """The next match still to be played WITHIN this acca: the earliest-kickoff
+    pending leg. Returns its team-set key, or None if the acca is settled."""
+    pending = [l for l in a["legs"] if l["status"] == "pending"]
+    if not pending:
+        return None
+    # earliest by kickoff; legs without a known time sort last (inf sentinel)
+    nxt = min(pending, key=lambda l: l["ko_utc"].timestamp()
+              if l["ko_utc"] else float("inf"))
+    teams = [t.strip() for t in nxt["match"].split(" v ")]
+    return frozenset(_norm(t) for t in teams)
+
+
 def _acca_card(a, next_key=None):
     badge = {"WON": ("badge-won", "WON 🎉"),
              "LOST": ("badge-lost", "LOST"),
              "LIVE": ("badge-live", "STILL LIVE")}[a["overall"]]
-    legrows = "\n".join(_leg_row(l, next_key) for l in a["legs"])
+    # Highlight each acca's OWN next match (not one global next across all accas),
+    # so every live acca shows where it stands.
+    own_next = _acca_next_key(a)
+    legrows = "\n".join(_leg_row(l, own_next) for l in a["legs"])
     ret = a["returns"]
     ret_str = f"£{ret:,.0f}" if ret >= 1000 else f"£{ret:,.2f}"
     profit = ret - a["stake"]
@@ -188,8 +194,8 @@ def _acca_card(a, next_key=None):
       </div>"""
 
 
-def write_tracker(accas, generated, any_results, next_key=None):
-    cards = "\n".join(_acca_card(a, next_key) for a in accas)
+def write_tracker(accas, generated, any_results):
+    cards = "\n".join(_acca_card(a) for a in accas)
     total_stake = sum(a["stake"] for a in accas)
     won = [a for a in accas if a["overall"] == "WON"]
     total_return = sum(a["returns"] for a in won)
@@ -219,6 +225,8 @@ def write_tracker(accas, generated, any_results, next_key=None):
 _TEMPLATE = """<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Auto-reload every 10 min so an open tab picks up freshly-pushed results. -->
+<meta http-equiv="refresh" content="600">
 <title>My World Cup 2026 Bets</title>
 <style>
   :root { --ink:#1d3557; --line:#e3e8ef; --won:#2a9d8f; --lost:#e76f51; --live:#e9a33a; }
@@ -288,36 +296,29 @@ _TEMPLATE = """<!DOCTYPE html>
 </body></html>"""
 
 
-def main():
+def main(events=None):
     bets = json.load(open(os.path.join(HERE, "bets.json"), encoding="utf-8"))
-    api_key = load_api_key()
-    results = {}
-    fixtures = []
-    if api_key:
-        try:
-            results = fetch_results(api_key)
-        except Exception as e:
-            print(f"(Could not fetch results: {e})")
-        try:
-            fixtures = fetch_fixtures(api_key)
-        except Exception as e:
-            print(f"(Could not fetch fixtures: {e})")
-    else:
-        print("No API key — showing bets as pending. Set ODDS_API_KEY to fetch results.")
+    results, fixtures = {}, []
+    # `events` may be passed in (refresh.py fetches once and shares); otherwise
+    # fetch here. Either way it's a single /scores call.
+    if events is None:
+        api_key = load_api_key()
+        if api_key:
+            try:
+                events = fetch_score_events(api_key)
+            except Exception as e:
+                print(f"(Could not fetch results/fixtures: {e})")
+                events = []
+        else:
+            print("No API key — showing bets as pending. Set ODDS_API_KEY to fetch results.")
+            events = []
+    if events:
+        results = results_from_events(events)
+        fixtures = fixtures_from_events(events)
 
     fix_by_match = _fixture_lookup(fixtures)
     evaluated = [eval_acca(a, results, fix_by_match) for a in bets["accas"]]
     any_results = any(l["status"] != "pending" for a in evaluated for l in a["legs"])
-
-    # The "next" match among the bet legs = earliest not-yet-played leg fixture.
-    bet_keys = {frozenset(_norm(t) for t in l["match"].split(" v "))
-                for a in evaluated for l in a["legs"]}
-    next_key = None
-    for f in fixtures:               # fixtures are sorted by kickoff
-        k = frozenset([_norm(f["home"]), _norm(f["away"])])
-        if k in bet_keys and not f["completed"]:
-            next_key = k
-            break
 
     # console summary
     for a in evaluated:
@@ -328,8 +329,11 @@ def main():
             print(f"   {mark} {l['pick']:<22} {l['score']}")
 
     # generated timestamp: use the API's freshest last_update if available, else a label
-    generated = "pre-tournament (no results yet)" if not any_results else "live"
-    out = write_tracker(evaluated, generated, any_results, next_key)
+    # Real "last refreshed" stamp in BST (UTC+1), so the page shows when the
+    # Action/you last pulled results.
+    stamp = (datetime.now(timezone.utc) + timedelta(hours=1)).strftime("%a %d %b, %H:%M BST")
+    generated = stamp + ("" if any_results else " — pre-tournament, no results yet")
+    out = write_tracker(evaluated, generated, any_results)
     print(f"\nWrote {out}")
 
 

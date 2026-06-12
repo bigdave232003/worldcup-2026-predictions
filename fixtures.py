@@ -76,18 +76,22 @@ def channel_for(home, away):
     return _CHANNELS.get(frozenset([_norm(home), _norm(away)]), "BBC/ITV TBC")
 
 
-def fetch_fixtures(api_key=None):
-    """Return fixtures sorted by kickoff:
-       [{home, away, ko_utc(datetime), ko_bst(datetime), completed, channel}].
-    """
+def fetch_score_events(api_key=None):
+    """Single call to the /scores endpoint (costs 2 quota). Returns the raw
+    event list, which both fixtures and results are parsed from — so callers
+    should fetch ONCE and reuse, not call the endpoint repeatedly."""
     api_key = api_key or load_api_key()
     if not api_key:
         return []
     url = f"{API_HOST}/v4/sports/{SPORT_KEY}/scores/?apiKey={api_key}&daysFrom=3"
     req = urllib.request.Request(url, headers={"User-Agent": "wc2026/1.0"})
     with urllib.request.urlopen(req, timeout=30) as r:
-        events = json.load(r)
+        return json.load(r)
 
+
+def fixtures_from_events(events):
+    """Parse fixtures (sorted by kickoff) from raw /scores events:
+       [{home, away, ko_utc, ko_bst, completed, channel}]."""
     out = []
     for ev in events:
         ct = ev.get("commence_time")
@@ -102,6 +106,11 @@ def fetch_fixtures(api_key=None):
         })
     out.sort(key=lambda x: x["ko_utc"])
     return out
+
+
+def fetch_fixtures(api_key=None):
+    """Convenience: fetch the score events and parse fixtures in one call."""
+    return fixtures_from_events(fetch_score_events(api_key))
 
 
 def next_fixture(fixtures, now_utc=None):

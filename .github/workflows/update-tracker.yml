@@ -1,11 +1,11 @@
 name: Update site (tracker + next game)
 
 # Refreshes bet_tracker.html (results) and next_game.html (next kickoff) and
-# commits any change. Runs every 6 hours so the "next game" stays current
-# through match days.
+# commits any change. refresh.py makes ONE /scores call (cost 2 quota) and builds
+# both pages: 8 runs/day x 2 = ~480 quota/month, just under the 500 free-tier cap.
 on:
   schedule:
-    - cron: "13 */6 * * *"   # every 6 hours, off the :00 mark
+    - cron: "13 */3 * * *"   # every 3 hours, off the :00 mark
   workflow_dispatch: {}       # manual "Run workflow" button
 
 permissions:
@@ -27,12 +27,10 @@ jobs:
         with:
           python-version: "3.13"
 
-      - name: Refresh tracker + next game
+      - name: Refresh tracker + next game (one API call)
         env:
           ODDS_API_KEY: ${{ secrets.ODDS_API_KEY }}
-        run: |
-          python track_bets.py
-          python next_game.py
+        run: python refresh.py
 
       - name: Commit & push if changed
         run: |

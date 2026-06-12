@@ -16,7 +16,8 @@ except (AttributeError, ValueError):
     pass
 
 import site_chrome
-from fixtures import fetch_fixtures, next_fixture, fmt_bst
+from fixtures import (fetch_score_events, fixtures_from_events,
+                      next_fixture, fmt_bst)
 from model import predict
 from data import HOSTS
 
@@ -64,8 +65,12 @@ def _channel_badge(ch):
     return f'<span class="chan {cls}">📺 {_html.escape(ch)}</span>'
 
 
-def build():
-    fixtures = fetch_fixtures()
+def build(events=None):
+    # `events` may be passed in (refresh.py shares one /scores call across pages);
+    # otherwise fetch here. Either way it's a single API call.
+    if events is None:
+        events = fetch_score_events()
+    fixtures = fixtures_from_events(events)
     nf = next_fixture(fixtures) if fixtures else None
 
     if not nf:
@@ -128,6 +133,8 @@ def build():
 _TEMPLATE = """<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Auto-reload every 10 min so the page rolls to the next fixture after one ends. -->
+<meta http-equiv="refresh" content="600">
 <title>Next Game — World Cup 2026</title>
 <style>
   * { box-sizing:border-box; }
