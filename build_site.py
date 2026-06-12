@@ -24,6 +24,7 @@ except (AttributeError, ValueError):
 import site_chrome
 import predict_worldcup
 import track_bets
+import next_game
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -39,7 +40,11 @@ def main():
         f.write(site_chrome.render_index())
     print(f"✓ index.html")
 
-    # 2. Predictions page (model + 20k simulation + live-odds accas)
+    # 2. Next game page (kickoff time, channel, countdown, prediction)
+    print("\nBuilding next-game page...")
+    next_game.build()
+
+    # 3. Predictions page (model + 20k simulation + live-odds accas)
     print("\nBuilding predictions page (this runs the simulation)...")
     predict_worldcup.run()
 
@@ -49,7 +54,8 @@ def main():
 
     print("\n" + "=" * 60)
     print("Site built. Pages:")
-    for name in ("index.html", "worldcup_predictions.html", "bet_tracker.html"):
+    for name in ("index.html", "next_game.html",
+                 "worldcup_predictions.html", "bet_tracker.html"):
         print(f"  {os.path.join(HERE, name)}")
     print("Open index.html to browse.")
 

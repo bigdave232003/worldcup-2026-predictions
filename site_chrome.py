@@ -10,6 +10,7 @@ files to deploy on GitHub Pages).
 # Pages in the site. (filename, label, active-key)
 PAGES = [
     ("index.html", "Home", "home"),
+    ("next_game.html", "Next Game", "next"),
     ("worldcup_predictions.html", "Predictions", "predictions"),
     ("bet_tracker.html", "My Bets", "bets"),
 ]
@@ -44,6 +45,12 @@ def nav(active):
 def render_index():
     """Full static landing page linking to the other pages."""
     cards = """
+      <a class="card" href="next_game.html">
+        <h3>⏱️ Next Game</h3>
+        <p>The next match to kick off, with its UK kick-off time (BST), TV channel
+           (BBC&nbsp;/&nbsp;ITV), a live countdown and the model's prediction.</p>
+        <span class="go">See what's next &rarr;</span>
+      </a>
       <a class="card" href="worldcup_predictions.html">
         <h3>📊 Match Predictions</h3>
         <p>Score, win/draw/loss probability and a most-likely result for all 72

@@ -44,12 +44,19 @@
   tr.leg-lost { background:#fdf0ec; }
   tr.leg-lost .team { color:var(--lost); text-decoration:line-through; }
   tr.leg-pending .res { color:#9aa7b6; }
+  .legs .kowhen { color:#46566a; font-size:11.5px; font-weight:600; }
+  .chan { display:inline-block; font-size:10px; font-weight:700; color:#fff;
+    border-radius:12px; padding:1px 7px; vertical-align:1px; }
+  .ch-bbc { background:#000; } .ch-itv { background:#d81f7a; } .ch-tbc { background:#9aa7b6; }
+  tr.leg-next { background:#eafaf6; box-shadow:inset 3px 0 0 var(--won); }
+  .nextpill { background:var(--won); color:#fff; font-size:9px; font-weight:800;
+    border-radius:10px; padding:1px 6px; margin-left:7px; vertical-align:1px; letter-spacing:.05em; }
   footer { max-width:920px; margin:0 auto; padding:6px 24px 50px; font-size:12px; color:#8595a6; }
 </style></head>
 <body>
 <nav class="sitenav">
   <span class="brand">⚽ WC 2026</span>
-  <div class="links"><a href="index.html" class="">Home</a><a href="worldcup_predictions.html" class="">Predictions</a><a href="bet_tracker.html" class="is-active">My Bets</a></div>
+  <div class="links"><a href="index.html" class="">Home</a><a href="next_game.html" class="">Next Game</a><a href="worldcup_predictions.html" class="">Predictions</a><a href="bet_tracker.html" class="is-active">My Bets</a></div>
 </nav>
 <style>
   .sitenav { position:sticky; top:0; z-index:50; display:flex; align-items:center;
@@ -79,11 +86,11 @@
         <table class="legs">
           <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
               <th>Result</th></tr>
-          <tr class="leg-pending"><td class="st">⏳</td><td class="team">Scotland win</td><td class="venue">Haiti v Scotland</td><td class="score">1.53</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Germany win</td><td class="venue">Germany v Ivory Coast</td><td class="score">1.53</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Brazil win</td><td class="venue">Brazil v Morocco</td><td class="score">1.62</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Sweden</td><td class="score">1.62</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Argentina win</td><td class="venue">Argentina v Austria</td><td class="score">1.62</td><td class="res">—</td></tr>
+          <tr class="leg-pending"><td class="st">⏳</td><td class="team">Scotland win</td><td class="venue">Haiti v Scotland<br><span class="kowhen">Sun 14 Jun, 02:00 BST</span> <span class="chan ch-bbc">BBC One</span></td><td class="score">1.53</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Germany win</td><td class="venue">Germany v Ivory Coast<br><span class="kowhen">Sat 20 Jun, 21:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.53</td><td class="res">—</td></tr>
+<tr class="leg-pending leg-next"><td class="st">⏳</td><td class="team">Brazil win<span class="nextpill">NEXT</span></td><td class="venue">Brazil v Morocco<br><span class="kowhen">Sat 13 Jun, 23:00 BST</span> <span class="chan ch-bbc">BBC One</span></td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Sweden<br><span class="kowhen">Sat 20 Jun, 18:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Argentina win</td><td class="venue">Argentina v Austria<br><span class="kowhen">Mon 22 Jun, 18:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.62</td><td class="res">—</td></tr>
         </table>
       </div>
 
@@ -97,12 +104,12 @@
         <table class="legs">
           <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
               <th>Result</th></tr>
-          <tr class="leg-pending"><td class="st">⏳</td><td class="team">Brazil win</td><td class="venue">Brazil v Morocco</td><td class="score">1.62</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Sweden</td><td class="score">1.62</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Argentina win</td><td class="venue">Argentina v Austria</td><td class="score">1.62</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Spain win</td><td class="venue">Spain v Uruguay</td><td class="score">1.62</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Germany win</td><td class="venue">Germany v Ecuador</td><td class="score">1.67</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">England win</td><td class="venue">England v Croatia</td><td class="score">1.70</td><td class="res">—</td></tr>
+          <tr class="leg-pending leg-next"><td class="st">⏳</td><td class="team">Brazil win<span class="nextpill">NEXT</span></td><td class="venue">Brazil v Morocco<br><span class="kowhen">Sat 13 Jun, 23:00 BST</span> <span class="chan ch-bbc">BBC One</span></td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Sweden<br><span class="kowhen">Sat 20 Jun, 18:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Argentina win</td><td class="venue">Argentina v Austria<br><span class="kowhen">Mon 22 Jun, 18:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Spain win</td><td class="venue">Spain v Uruguay<br><span class="kowhen">Sat 27 Jun, 01:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.62</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Germany win</td><td class="venue">Germany v Ecuador<br><span class="kowhen">Thu 25 Jun, 21:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.67</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">England win</td><td class="venue">England v Croatia<br><span class="kowhen">Wed 17 Jun, 21:00 BST</span> <span class="chan ch-itv">ITV1</span></td><td class="score">1.70</td><td class="res">—</td></tr>
         </table>
       </div>
 
@@ -116,13 +123,13 @@
         <table class="legs">
           <tr><th></th><th>Selection</th><th>Match</th><th class="score">Odds</th>
               <th>Result</th></tr>
-          <tr class="leg-pending"><td class="st">⏳</td><td class="team">France win</td><td class="venue">France v Norway</td><td class="score">1.80</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Iran win</td><td class="venue">Iran v New Zealand</td><td class="score">1.85</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Czech Republic win</td><td class="venue">Czech Republic v South Africa</td><td class="score">1.91</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Japan</td><td class="score">2.00</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">South Korea win</td><td class="venue">South Africa v South Korea</td><td class="score">2.00</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Switzerland win</td><td class="venue">Canada v Switzerland</td><td class="score">2.05</td><td class="res">—</td></tr>
-<tr class="leg-pending"><td class="st">⏳</td><td class="team">Japan win</td><td class="venue">Japan v Sweden</td><td class="score">2.05</td><td class="res">—</td></tr>
+          <tr class="leg-pending"><td class="st">⏳</td><td class="team">France win</td><td class="venue">France v Norway<br><span class="kowhen">Fri 26 Jun, 20:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.80</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Iran win</td><td class="venue">Iran v New Zealand<br><span class="kowhen">Tue 16 Jun, 02:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.85</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Czech Republic win</td><td class="venue">Czech Republic v South Africa<br><span class="kowhen">Thu 18 Jun, 17:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">1.91</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Netherlands win</td><td class="venue">Netherlands v Japan<br><span class="kowhen">Sun 14 Jun, 21:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">2.00</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">South Korea win</td><td class="venue">South Africa v South Korea<br><span class="kowhen">Thu 25 Jun, 02:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">2.00</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Switzerland win</td><td class="venue">Canada v Switzerland<br><span class="kowhen">Wed 24 Jun, 20:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">2.05</td><td class="res">—</td></tr>
+<tr class="leg-pending"><td class="st">⏳</td><td class="team">Japan win</td><td class="venue">Japan v Sweden<br><span class="kowhen">Fri 26 Jun, 00:00 BST</span> <span class="chan ch-bbc">BBC/ITV TBC</span></td><td class="score">2.05</td><td class="res">—</td></tr>
         </table>
       </div>
 </div>

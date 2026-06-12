@@ -26,6 +26,7 @@ except (AttributeError, ValueError):
 
 from value_finder import load_api_key
 import site_chrome
+from fixtures import fetch_fixtures, fmt_bst, channel_for
 
 API_HOST = "https://api.the-odds-api.com"
 SPORT_KEY = "soccer_fifa_world_cup"
@@ -99,11 +100,24 @@ def eval_leg(leg, results):
     return status, score
 
 
-def eval_acca(acca, results):
+def _fixture_lookup(fixtures):
+    """Map frozenset(normalised team names) -> fixture dict (time + channel)."""
+    return {frozenset([_norm(f["home"]), _norm(f["away"])]): f for f in fixtures}
+
+
+def eval_acca(acca, results, fix_by_match=None):
+    fix_by_match = fix_by_match or {}
     legs = []
     for leg in acca["legs"]:
         status, score = eval_leg(leg, results)
-        legs.append({**leg, "status": status, "score": score})
+        teams = [t.strip() for t in leg["match"].split(" v ")]
+        fx = fix_by_match.get(frozenset(_norm(t) for t in teams))
+        legs.append({
+            **leg, "status": status, "score": score,
+            "ko_bst": fmt_bst(fx["ko_bst"]) if fx else "TBC",
+            "ko_utc": fx["ko_utc"] if fx else None,
+            "channel": fx["channel"] if fx else channel_for(*teams),
+        })
     statuses = [l["status"] for l in legs]
     if "lost" in statuses:
         overall = "LOST"
@@ -122,21 +136,32 @@ def eval_acca(acca, results):
 import html as _html
 
 
-def _leg_row(l):
+def _chan_badge(ch):
+    cls = "ch-bbc" if "BBC" in ch else ("ch-itv" if "ITV" in ch else "ch-tbc")
+    return f'<span class="chan {cls}">{_html.escape(ch)}</span>'
+
+
+def _leg_row(l, next_key=None):
     icon = {"won": "✅", "lost": "❌", "pending": "⏳"}[l["status"]]
-    return (f'<tr class="leg-{l["status"]}">'
+    teams = [t.strip() for t in l["match"].split(" v ")]
+    is_next = next_key is not None and frozenset(_norm(t) for t in teams) == next_key
+    cls = f'leg-{l["status"]}' + (" leg-next" if is_next else "")
+    next_tag = '<span class="nextpill">NEXT</span>' if is_next else ""
+    return (f'<tr class="{cls}">'
             f'<td class="st">{icon}</td>'
-            f'<td class="team">{_html.escape(l["pick"])}</td>'
-            f'<td class="venue">{_html.escape(l["match"])}</td>'
+            f'<td class="team">{_html.escape(l["pick"])}{next_tag}</td>'
+            f'<td class="venue">{_html.escape(l["match"])}<br>'
+            f'<span class="kowhen">{_html.escape(l["ko_bst"])}</span> '
+            f'{_chan_badge(l["channel"])}</td>'
             f'<td class="score">{l["odds"]:.2f}</td>'
             f'<td class="res">{_html.escape(l["score"])}</td></tr>')
 
 
-def _acca_card(a):
+def _acca_card(a, next_key=None):
     badge = {"WON": ("badge-won", "WON 🎉"),
              "LOST": ("badge-lost", "LOST"),
              "LIVE": ("badge-live", "STILL LIVE")}[a["overall"]]
-    legrows = "\n".join(_leg_row(l) for l in a["legs"])
+    legrows = "\n".join(_leg_row(l, next_key) for l in a["legs"])
     ret = a["returns"]
     ret_str = f"£{ret:,.0f}" if ret >= 1000 else f"£{ret:,.2f}"
     profit = ret - a["stake"]
@@ -163,8 +188,8 @@ def _acca_card(a):
       </div>"""
 
 
-def write_tracker(accas, generated, any_results):
-    cards = "\n".join(_acca_card(a) for a in accas)
+def write_tracker(accas, generated, any_results, next_key=None):
+    cards = "\n".join(_acca_card(a, next_key) for a in accas)
     total_stake = sum(a["stake"] for a in accas)
     won = [a for a in accas if a["overall"] == "WON"]
     total_return = sum(a["returns"] for a in won)
@@ -237,6 +262,13 @@ _TEMPLATE = """<!DOCTYPE html>
   tr.leg-lost { background:#fdf0ec; }
   tr.leg-lost .team { color:var(--lost); text-decoration:line-through; }
   tr.leg-pending .res { color:#9aa7b6; }
+  .legs .kowhen { color:#46566a; font-size:11.5px; font-weight:600; }
+  .chan { display:inline-block; font-size:10px; font-weight:700; color:#fff;
+    border-radius:12px; padding:1px 7px; vertical-align:1px; }
+  .ch-bbc { background:#000; } .ch-itv { background:#d81f7a; } .ch-tbc { background:#9aa7b6; }
+  tr.leg-next { background:#eafaf6; box-shadow:inset 3px 0 0 var(--won); }
+  .nextpill { background:var(--won); color:#fff; font-size:9px; font-weight:800;
+    border-radius:10px; padding:1px 6px; margin-left:7px; vertical-align:1px; letter-spacing:.05em; }
   footer { max-width:920px; margin:0 auto; padding:6px 24px 50px; font-size:12px; color:#8595a6; }
 </style></head>
 <body>
@@ -260,16 +292,32 @@ def main():
     bets = json.load(open(os.path.join(HERE, "bets.json"), encoding="utf-8"))
     api_key = load_api_key()
     results = {}
+    fixtures = []
     if api_key:
         try:
             results = fetch_results(api_key)
         except Exception as e:
             print(f"(Could not fetch results: {e})")
+        try:
+            fixtures = fetch_fixtures(api_key)
+        except Exception as e:
+            print(f"(Could not fetch fixtures: {e})")
     else:
         print("No API key — showing bets as pending. Set ODDS_API_KEY to fetch results.")
 
-    evaluated = [eval_acca(a, results) for a in bets["accas"]]
+    fix_by_match = _fixture_lookup(fixtures)
+    evaluated = [eval_acca(a, results, fix_by_match) for a in bets["accas"]]
     any_results = any(l["status"] != "pending" for a in evaluated for l in a["legs"])
+
+    # The "next" match among the bet legs = earliest not-yet-played leg fixture.
+    bet_keys = {frozenset(_norm(t) for t in l["match"].split(" v "))
+                for a in evaluated for l in a["legs"]}
+    next_key = None
+    for f in fixtures:               # fixtures are sorted by kickoff
+        k = frozenset([_norm(f["home"]), _norm(f["away"])])
+        if k in bet_keys and not f["completed"]:
+            next_key = k
+            break
 
     # console summary
     for a in evaluated:
@@ -281,7 +329,7 @@ def main():
 
     # generated timestamp: use the API's freshest last_update if available, else a label
     generated = "pre-tournament (no results yet)" if not any_results else "live"
-    out = write_tracker(evaluated, generated, any_results)
+    out = write_tracker(evaluated, generated, any_results, next_key)
     print(f"\nWrote {out}")
 
 
